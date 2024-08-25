@@ -14,10 +14,15 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const blog = await BlogPost.findById(req.params.id);
-    if (!blog) return res.status(404).json({ message: "Blog not found" });
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
     res.json(blog);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(`Error retrieving blog with ID ${req.params.id}:`, err);
+    console.error(`Error deleting blog with ID ${req.params.id}:`, err);
+
+    res.status(500).json({ message: "Failed to retrieve the blog" });
   }
 });
 
@@ -40,20 +45,21 @@ router.post("/", async (req, res) => {
 // DELETE /blogs/:id - Delete a blog by ID
 router.delete("/:id", async (req, res) => {
   try {
-    console.log(`Attempting to delete blog with ID: ${req.params.id}`);
-    const blog = await BlogPost.findById(req.params.id);
-
+    console.log(`Received request to delete blog with ID: ${req.params.id}`);
+    const blog = await BlogPost.findByIdAndDelete(req.params.id);
     if (!blog) {
       console.log(`Blog with ID ${req.params.id} not found`);
       return res.status(404).json({ message: "Blog not found" });
     }
 
-    await blog.remove();
     console.log(`Blog with ID ${req.params.id} deleted successfully`);
     res.json({ message: "Blog deleted" });
   } catch (err) {
-    console.error(`Error deleting blog with ID ${req.params.id}:`, err.message);
-    res.status(500).json({ message: err.message });
+    console.error(`Error deleting blog with ID ${req.params.id}:`, err);
+    res
+      .status(500)
+      .json({ message: `Failed to delete the blog: ${err.message}` });
   }
 });
+
 module.exports = router;
